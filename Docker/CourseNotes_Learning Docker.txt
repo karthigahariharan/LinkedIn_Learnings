@@ -1,0 +1,600 @@
+Course Title: Learning Docker
+
+Description: Docker is the next step beyond virtualization. A Docker image contains everything it needs to run, independent of the Linux server on which it lives: a copy of the operating system, a database, code, configuration files, dependencies, and so on. Images can also be packaged and shared with other Docker admins. Arthur Ulfeldt uses Docker to run complex systems with millions of users and hundreds of containers. Here, he shares his knowledge with you. He introduces the basics of Docker, including its containers, Dockerfiles (or base images), and capabilities for networking, data management, app deployment, infrastructure optimization, and more. Watch and learn how to build your own containers and network and link containers.
+
+
+***********************************************
+Chapter: 2. Using Docker
+***********************************************
+
+
+-----------------------------------------------
+Video: The Docker flow: Containers to images
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:01:54            docker ps -l --format =$FORMAT - to see last container 
+
+0:02:38            How to access file in stopped container? -- docker commit -> new image from container 
+
+0:05:17            docker run -ti ubuntu bash
+ls
+touch MY-IMPORTANT_FILE
+ls
+exit
+dockers ps -l --format=$FORMAT
+docker commit <container_id>
+-- gives images id
+-- TO give image name
+docker tag <image_id> my-image
+docker images
+docker run -ti my-image bash
+ls
+<you can see your saved file>
+docker commit happy_poitras my-image-2
+<directky using container name>
+ 
+
+
+-----------------------------------------------
+Video: Run processes in containers
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:49            docker run
+-- containers have main process
+-- containers have names 
+
+0:02:49            docker run --rm -ti ubuntu sleep 5
+<delete when it exits - rm>
+docker run -ti ubuntu bash -c "sleep 3; echo all done" 
+
+0:04:47            Leaving things running in a container --?
+docker run -d -ti ubuntu bash 
+d- detach
+gives id to find it
+also can be found using docker ps command
+docker attach suspicious-williams <docker name>
+How to jump away
+ctrl p ctrl q
+IT just detaches and runs 
+
+0:04:59            Running more things in a container ?
+add another process? 
+
+
+-----------------------------------------------
+Video: Manage containers
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:04            Running more things in a container ?
+add another process?
+docker exec -ti suspicious_williams bash
+<another shell in container>
+make a file and check in another terminal
+when exits
+attached process will also exit 
+
+0:01:22            Looking at container output
+docker logs
+docker logs container_name
+docker run --name example -d ubuntu bash -c "lose /etc/password"
+docker logs example
+<check errors> 
+
+0:02:20            Stopping and removing containers?
+docker kill container-name
+docker rm
+docker run -ti ubuntu bash
+docker kill <container_name> 
+
+0:03:11            docker rm <container_name>
+remove old container , stopped still exists 
+
+0:04:09            resource constraints:
+memoty limits
+--memory maximum-allowed-memory image-name command
+cpu limits
+dockerr run --cpu-shares relative to other containers
+docker run --cpu-quota 
+
+
+-----------------------------------------------
+Video: Network between containers
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:01            Lessons :
+dont let containers fetch dependencies when they start
+Dont leave important things in unnamed stopped containers 
+
+0:00:53            Networking:
+Prgms are isolated from internet by default
+can group containers into "private" networks
+exposing ports and linking containers 
+
+0:03:11            exposing a specific port:
+docker run --rm -ti -p 45678:45678 -p 45679:45679  --name echo-server
+ubuntu bash
+nc -lp 45678 | nc -lp 45679
+<relay port> 
+
+0:06:17            To access that port :
+get ip of linux vm
+ docker-machine ip
+nc <address> 45678
+on another terminal
+nc <address> 45679
+send some data in one terminal
+get output in another terminal
+If yu have no nc installed,
+docker run --rm -ti ubuntu:14.04 bash
+nc <address> 45678
+restart relay <bcos it relays for only one connection> 
+
+0:08:03            output port can be chosen dynamically
+docker port echo-server
+echo-server <container name without specifying output port> 
+
+0:08:16            so we can use same fixed ports inside container 
+
+0:08:43            exposing udp ports:
+docker run -p outside-port:inside-port/protocol 
+
+
+-----------------------------------------------
+Video: Link containers
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:30            connecting containers:
+exposing ports and connect using ports 
+
+0:02:05            docker run -ti --rm -p 1234:1234 ubuntu:14.04 bash
+nc -lp 1234
+docker-machine ip
+client container --
+docker run -ti --rm ubuntu:14.04 bash
+nc ip 1234
+hello 
+
+0:03:04            connecting directly between containers :
+generally used with orchesetraton
+links all portrs through only one way
+use for services run on different differences 
+
+0:05:01            docker run -ti --rm --name server ubuntu:14.04 bash
+nc -lp 1234
+<another container- client>
+docker run --rm -ti --link server --name client ubuntu:14.04 bash
+nc server 1234
+hello
+how does it know name
+cat /etc/hosts
+-- name is put there 
+
+
+-----------------------------------------------
+Video: Dynamic and legacy linking
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:05            if server ip changes after that -  links can break 
+
+0:00:42            how to make links nt break --
+private networks
+Built in nameservers
+create netowrk in advance
+docker network-create 
+
+0:02:50            docker network create example
+docker run --rm -ti --net=example --name server ubuntu:14.04 bash
+nc -lp 1234
+<start clinet> // link server and within network using --net=example
+nc server 1234
+kill and start again
+link is broke 
+listen again
+reconnect again
+there will be a pause - name servers takes a little time 
+
+0:03:11            leegacy -- sets env variables in linking containers 
+
+
+-----------------------------------------------
+Video: Volumes
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:02            docker images
+--list downloaded images
+tagging images
+docker commit <id> <image_name>
+can use version number after name
+name structure --> register:port/organizaion/name
+getting images
+docker pull
+docker run
+docker push
+cleaning ?
+-- docker rmi image-name:tag
+docker images
+docker rmi image_id 
+docker rmi <imahe_name>
+for deleting my-images - write shell 
+
+0:03:12            volumes:
+shared folders - virtual discs
+2 main -- persistent & ephemeral
+not part of images
+sharing data with host:
+sharing between linux host and containers
+docker-machine ssh
+mkdir example
+ls /home/docker/example
+docker run -ti -v /home/docker/example:/shared-folder ubuntu bash
+cd /shared-folder
+ls
+touch my-data
+exit
+ls example 
+
+0:03:30            sharing a single file: -- path to single ffile should be shared 
+
+0:03:39            sharing between containeers    
+
+
+-----------------------------------------------
+Video: Docker registries
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:08            docker run -ti -v /shared-data ubuntu bash
+echo hello > /shared-data/data-file
+another docker
+docker ps -l 
+docker run -ti --volumes-from sick_hopper
+ubuntu bash
+ls /shared-data
+echo more > /shared-data/more-data
+exit original conttainer
+ls /shared-data
+start 3rd container
+docker ps 
+docker run -ti --volumes-from adoring_lumiere ubuntu bash
+ls /shared-data
+exit both the containers
+volumes ca be passed from 1 to another , bit cannot be saved 
+
+0:02:59            docker registeries - software - manage and distribute images
+
+finding images
+docker search ubuntu
+hub.docker.com
+docker login 
+docker pull debian:sid
+docker tag debian:sid karthiga/test-image-42:v99.9
+docker push karthiga/test-image-43:v99.9 
+
+
+***********************************************
+Chapter: 3. Building Docker Images
+***********************************************
+
+
+-----------------------------------------------
+Video: What are Dockerfiles?
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:02:26            dockerfile:
+building images with code
+small pggms to create an image
+docker build -t name-of-result .
+resulting images in your local docker registry
+each links makes new image
+dockerfile reference page - website 
+
+
+-----------------------------------------------
+Video: Building Dockerfiles
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:00            caching:
+build output for using cache
+dockers skips lines that is not changed
+saves time
+not shell scripts 
+
+0:00:21            Most basic :                   
+
+0:00:38            mkdir example
+cd example
+ls
+nano Dockerfile 
+
+0:04:14            FROM busybox
+RUN echo "building simple docker image"
+CMD echo "hello container"
+ctrl +x
+docker build -t hello .
+docker run --rm hello 
+
+0:08:52            Installing a program:
+FROM debian:sid
+RUN apt-get -y update
+RUN apt-get  install nano
+CMD ["/bin/nano","/tmp/notes"]
+docker build -t example/nanoer
+docker run --rm -ti example/nanoer 
+make somechanges
+
+adding file through docker build
+--from previous image
+
+FROM example/nanoer
+ADD notes.txt /notes.txt
+CMD ["/bin/nano","/notes.txt"]
+nano notes.txt 
+
+0:09:02            docker build -t example/notes . 
+
+0:09:19            docker run -ti --rm example/notes 
+
+
+-----------------------------------------------
+Video: Dockerfile syntax
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:30            FROM statement -- :            
+
+0:00:34            can be multiple                
+
+0:00:50            MAINTAINER firstname lastname <mail> 
+
+0:01:02            RUN - command ru
+RUN unzip install.zip 
+
+0:01:45            ADD statement - add local files
+ADD run.sh /run.sh
+add content of tar archives
+ADD project,tar.gz /install -- uncompresses to that directory
+also for URLS 
+
+0:01:53            ADD <url> /project/            
+
+0:02:23            sets environment variables - ENV DB_HOST=db.
+durring build and result 
+
+0:04:01            ENTRYPOINT - specifies the start of the command to run
+
+CMD - specifies whole command
+
+command - line pgm -- entrypoint
+
+not unsure - use CMD
+
+Shell form -- nano notes.txt
+EXEC form - ["",""] - nano to be run directly without using shell 
+
+0:04:09            EXPOSE - maps port into container 
+
+0:04:28            VOLUME - defines shared/ephemeral volumes 
+
+0:04:41            avoid defining shred folders in dockerfile 
+
+0:05:06            WORKDIR - sets directory the container starts in 
+WORKDIR /install/ 
+
+0:05:19            USER  - sets which users the container will run as
+USER arthur 
+
+
+-----------------------------------------------
+Video: Avoid golden images
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:01:46            include installers in your project
+canonical build system - to build from scratch
+use small base images - such as alpine
+build images you share publicly from dockerfiles
+dont leave passwwords in layers 
+
+
+***********************************************
+Chapter: 4. Under the Hood
+***********************************************
+
+
+-----------------------------------------------
+Video: The program Docker
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:05:01            Kernels :
+respons to msgs from hw
+start and schedile pgms
+controls and organizes storage
+Pass messages between pgms
+allocates resources, memory, cpu
+docker - manages kernel
+
+written in GO
+Manages kernel features - use cgroups to contain processes
+use namespaces - contain network
+copy-on-writes -- filesystesms to build images
+used for years
+
+makes scripting ds easy
+
+2 pgms:
+client and server
+communicate over socket
+[either over nw or file]
+
+client can even run inside docker itself 
+
+
+-----------------------------------------------
+Video: Networking and namespaces
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:01            docker-machine ssh
+ls -l /var/run/docker.sock
+$
+docker run -ti -v /var/run/docker.sock:/var/run/docker.sock docker sh
+docker run -ti ubuntu bash 
+
+0:00:47            Networking :
+moves frames, packets on local, between networks, address particular pgms 
+
+0:01:23            Bridging:
+create virtual networks in your computer
+Software switches
+control ethernet 
+
+0:03:49            apt-get update && apt-get install bridge-utils
+brctl show
+another terminal - create new network
+docker netwrok create my-new
+check brctl show
+can turn off this protection 
+
+0:06:21            routing : 
+
+creates firewall rules to move packets between networks
+NAT 
+change source address on way out
+change destn addr on way back in
+
+sudo iptables -n -L -t nat
+
+docker-machine ssh
+sudo iptables -n -L -t nat
+
+another terminal
+docker run -ti -p 8080:8080 ubuntu bash
+
+run iptables again
+exposing -- port forwarding 
+
+
+-----------------------------------------------
+Video: Processes and cgroups
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:02:29            Primer :
+
+starts with init process and vanishes when it exits
+
+start a container - hello
+docker inspect --format '{{.State.Pid}}' hello
+docker-machine ssh
+sudo kill 13646 
+
+0:02:42            init cleans up abandoned processes 
+
+0:05:11            process isolation -- cgroup
+
+any process it starts stay in that group
+
+start container
+docker-machine ssh
+ls /proc
+
+run ls/proc in container 
+
+
+-----------------------------------------------
+Video: Storage
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:00:04            resource limiting:
+
+scheduling cpu time
+memory allocation 
+Inherited limitations and quotas
+cant escape by starting more process 
+
+0:01:42            Unix storage:
+
+Actual storage , logical storage, filesystems, FUSE 
+
+0:04:56            COWs:
+
+Copy on write
+layer it over the image 
+
+0:05:14            contets of layers are  mooved between containers in gzip files 
+
+0:05:57            containers are independent of storage 
+
+possivle to run out of layers 
+
+0:07:20            volumes and bind mounting
+
+Linux file systems 
+
+0:08:09            sudo mount -o bind other-work work 
+
+0:08:54            df -a //show monuted           
+
+0:09:43            sudo umount work
+
+run ls again
+
+//1 file system layerr above another 
+
+0:10:31            geting mout order correct
+
+mounting volumes - host;s filesystem over guest 
+
+
+***********************************************
+Chapter: 5. Orchestration: Building Systems with Docker
+***********************************************
+
+
+-----------------------------------------------
+Video: Registries In detail
+-----------------------------------------------
+Note Time:         Note Text:                     
+
+0:01:07            docker registry - pgm
+stores layers and images
+listens on 5000
+maintainss an index and searches tags
+
+popular docker registry: 
+
+official python docker registry 
+
+0:01:25            running registry in docker     
+
+0:01:37            docker run -d -p 5000:5000 --restart=always --name registry registry:2 
+
+0:03:17            docker tag ubuntu:14.04 localhost:5000/mycompany/my-ubuntu:99
+
+docker push localhost:5000/mycompany/myubuntu:99
+
+setup authenticatin
+
+goto documentatin 
+
+0:03:49            storage options for registry --
+local
+s3 - storage service 
+
+0:04:04            saving and loading containers
+
+docker save
+docker load 
+
+[object Object]

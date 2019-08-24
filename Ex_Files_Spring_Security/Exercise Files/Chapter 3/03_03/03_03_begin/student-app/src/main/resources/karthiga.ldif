@@ -1,0 +1,51 @@
+dn: dc=karthiga,dc=com
+objectclass: top
+objectclass: domain
+objectclass: extensibleObject
+dc: karthiga
+o: karthiga
+
+dn: ou=people,dc=karthiga,dc=com
+objectclass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=karthiga,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=karthiga,ou=people,dc=karthiga,dc=com
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: Karthiga Hariharan
+sn: Hariharan
+givenName: Karthiga
+mail: karthiga.94@gmail.com
+uid: karthiga
+userPassword: {SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=
+
+dn: uid=student,ou=people,dc=karthiga,dc=com
+objectClass: inetOrgPerson
+cn: John Doe
+sn: Doe
+givenName: student
+mail: student@karthiga.com
+uid: student
+userPassword: {SHA}iEPX+SQWIR3p67lj/0zigSWTKHg=
+
+dn: cn=admin,ou=groups,dc=karthiga,dc=com
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: admins
+uniqueMember: uid=fpmoles,ou=people,dc=karthiga,dc=com
+
+dn: cn=user,ou=groups,dc=karthiga,dc=com
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: users
+uniqueMember: uid=karthiga,ou=people,dc=karthiga,dc=com
+uniqueMember: uid=student,ou=people,dc=karthiga,dc=com
+
